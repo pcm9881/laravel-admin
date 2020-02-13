@@ -24,9 +24,12 @@ RUN apt-get update -y
 RUN apt-get install -y \
     wget \
     curl \
+    vim \
     git \
     sudo \
-    supervisor 
+    nginx \
+    supervisor
+
 
 RUN apt-get install -y \
     php7.3 \
@@ -35,6 +38,17 @@ RUN apt-get install -y \
     php7.3-mbstring \
     php7.3-xml \
     php7.3-pgsql
+
+### nginx
+RUN rm /etc/nginx/sites-enabled/default
+
+### nginx config
+ADD ./nginx/nginx-site.conf /etc/nginx/sites-available/web
+RUN ln -s /etc/nginx/sites-available/web /etc/nginx/sites-enabled/web
+
+### php timezone setting
+ADD ./php/php-overrides.ini /etc/php/7.3/fpm/conf.d/99-overrides.ini
+ADD ./php/php-overrides.ini /etc/php/7.3/cli/conf.d/99-overrides.ini
 
 RUN adduser --disabled-password --gecos "" ${ADMIN_USER}
 RUN usermod -a -G www-data ${ADMIN_USER}
@@ -49,7 +63,7 @@ RUN mkdir -p /var/log/supervisor
 ADD supervisord.conf /etc/supervisor/conf.d/
 
 
-EXPOSE 80 443
+EXPOSE 443 80
 VOLUME [ "${WEB_ROOT}" ]
 
 RUN service php7.3-fpm start
